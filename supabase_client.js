@@ -219,6 +219,70 @@ const SupabaseDb = {
         const encoded = encodeURIComponent(hwidStr);
         const res = await makeRequest(cfg, 'DELETE', `/rest/v1/banned_hwids?hwid=eq.${encoded}`);
         return res.statusCode >= 200 && res.statusCode < 300;
+    },
+
+    async getPanelUsers() {
+        const cfg = loadConfig();
+        if (!cfg) return null;
+        const res = await makeRequest(cfg, 'GET', '/rest/v1/panel_users?select=*');
+        return Array.isArray(res.data) ? res.data : null;
+    },
+
+    async createPanelUser(userObj) {
+        const cfg = loadConfig();
+        if (!cfg) return null;
+        const res = await makeRequest(cfg, 'POST', '/rest/v1/panel_users', userObj, {
+            'Prefer': 'return=representation'
+        });
+        return res.statusCode >= 200 && res.statusCode < 300;
+    },
+
+    async updatePanelUser(username, updateObj) {
+        const cfg = loadConfig();
+        if (!cfg) return null;
+        const encoded = encodeURIComponent(username);
+        const res = await makeRequest(cfg, 'PATCH', `/rest/v1/panel_users?username=eq.${encoded}`, updateObj, {
+            'Prefer': 'return=representation'
+        });
+        return res.statusCode >= 200 && res.statusCode < 300;
+    },
+
+    async deletePanelUser(username) {
+        const cfg = loadConfig();
+        if (!cfg) return null;
+        const encoded = encodeURIComponent(username);
+        const res = await makeRequest(cfg, 'DELETE', `/rest/v1/panel_users?username=eq.${encoded}`);
+        return res.statusCode >= 200 && res.statusCode < 300;
+    },
+
+    async updateKeyNote(keyStr, note) {
+        return this.updateKey(keyStr, { note: String(note || '') });
+    },
+
+    async emergencyKillswitchByCreator(creatorUsername) {
+        const cfg = loadConfig();
+        if (!cfg) return { success: false, message: 'Supabase no configurado' };
+        const encoded = encodeURIComponent(creatorUsername);
+        const res = await makeRequest(cfg, 'GET', `/rest/v1/licenses?generated_by=eq.${encoded}&select=*`);
+        if (!Array.isArray(res.data)) return { success: false, message: 'No se pudieron consultar las licencias' };
+        
+        const keys = res.data;
+        if (!keys.length) return { success: true, count: 0, hwidsBanned: 0 };
+
+        // 1. Bloquear todas las claves
+        await makeRequest(cfg, 'PATCH', `/rest/v1/licenses?generated_by=eq.${encoded}`, { is_blocked: true });
+
+        // 2. Banear HWIDs vinculados
+        let hwidsBanned = 0;
+        for (const k of keys) {
+            if (k.hwid && String(k.hwid).trim()) {
+                try {
+                    await this.banHwid(String(k.hwid).trim(), `Killswitch de Emergencia (Creador: ${creatorUsername})`);
+                    hwidsBanned++;
+                } catch (_) {}
+            }
+        }
+        return { success: true, count: keys.length, hwidsBanned };
     }
 };
 

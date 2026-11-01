@@ -107,6 +107,57 @@
     #account-form .btn { min-height: 48px; padding-inline: 22px; }
     #account-management .account-list { gap: 11px; margin-top: 20px; }
     #account-management .account-row { min-height: 66px; padding: 15px 18px; border-radius: 14px; }
+    .note-cell-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .note-cell-wrap:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .note-display.unassigned {
+      color: var(--text-sub);
+      font-style: italic;
+    }
+    .note-edit-icon {
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    .note-cell-wrap:hover .note-edit-icon {
+      opacity: 1;
+    }
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge-status-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge-status-suspended {
+      background: rgba(239, 68, 68, 0.18);
+      color: #ef4444;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
     @media (max-width: 900px) {
       #account-form.form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       #account-form .btn { width: 100%; }
@@ -2261,11 +2312,38 @@
       if (currentUser?.role !== 'owner') return;
       try {
         const data = await api('/api/owner/users');
-        $('account-list').innerHTML = data.users.map(user => `
-          <div class="account-row">
-            <div class="account-meta"><span class="account-name">${esc(user.username)}</span><span class="account-kind">${roleLabels[user.role] || esc(user.role)}${user.managed ? ' · cuenta del panel' : ' · cuenta principal'}</span></div>
-            ${user.managed ? `<button class="btn btn-sm btn-outline-danger" type="button" data-remove-user="${esc(user.username)}">Quitar</button>` : ''}
-          </div>`).join('');
+        $('account-list').innerHTML = data.users.map(user => {
+          const isOwner = user.role === 'owner';
+          const isActive = user.is_active !== false;
+          const limitTxt = user.daily_limit ? `${user.daily_limit}/día` : 'Ilimitado';
+          return `
+          <div class="account-row" style="flex-wrap:wrap; gap:12px;">
+            <div class="account-meta">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="account-name">${esc(user.username)}</span>
+                <span class="role-badge" style="background:${user.role==='owner'?'rgba(245,158,11,0.2)':user.role==='admin'?'rgba(99,102,241,0.2)':'rgba(16,185,129,0.2)'}">${roleLabels[user.role] || esc(user.role)}</span>
+                ${!isOwner ? `<span class="${isActive ? 'badge-status-active' : 'badge-status-suspended'}">${isActive ? 'Activo' : 'Suspendido'}</span>` : ''}
+              </div>
+              <div class="account-kind" style="margin-top:4px;">
+                ${isOwner ? '👑 Propietario Máximo (Control Total)' : `Cuota: <strong>${limitTxt}</strong> · ${user.managed ? 'Cuenta de equipo' : 'Cuenta principal'}`}
+              </div>
+            </div>
+            ${!isOwner ? `
+            <div class="user-actions">
+              <button class="btn btn-sm btn-secondary" type="button" data-change-pass="${esc(user.username)}" title="Cambiar contraseña de este usuario">
+                🔑 Clave
+              </button>
+              <button class="btn btn-sm btn-secondary" type="button" data-edit-quota="${esc(user.username)}" data-limit="${user.daily_limit || 0}" data-active="${isActive}" data-role="${user.role}" title="Ajustar límites de claves">
+                ⚡ Cuota
+              </button>
+              <button class="btn btn-sm btn-outline-danger" type="button" data-killswitch="${esc(user.username)}" title="Bloqueo de Emergencia: revocar todo lo creado por este usuario">
+                🚨 Killswitch
+              </button>
+              ${user.managed ? `<button class="btn btn-sm btn-outline-danger" type="button" data-remove-user="${esc(user.username)}" title="Quitar cuenta">🗑️</button>` : ''}
+            </div>
+            ` : ''}
+          </div>`;
+        }).join('');
       } catch (error) {
         toast(error.message || 'No se pudieron cargar las cuentas.', true);
       }
@@ -2292,18 +2370,128 @@
     });
 
     $('account-list').addEventListener('click', async event => {
+      // 1. Cambiar contraseña
+      const passBtn = event.target.closest('[data-change-pass]');
+      if (passBtn) {
+        const username = passBtn.dataset.changePass;
+        return openModal({
+          title: `Cambiar Contraseña: ${username}`,
+          body: `Ingresa la nueva contraseña para ${username} (mínimo 6 caracteres):`,
+          extra: `<div class="modal-input"><input type="password" id="new-user-pwd" placeholder="Nueva contraseña" minlength="6" autocomplete="new-password"></div>`,
+          actions: [
+            cancelBtn,
+            {
+              label: 'Actualizar Contraseña',
+              cls: 'btn-primary',
+              onClick: async () => {
+                const newPassword = $('new-user-pwd').value;
+                if (!newPassword || newPassword.length < 6) return toast('Mínimo 6 caracteres', true);
+                closeModal();
+                try {
+                  const d = await api('/api/owner/users/change-password', { username, newPassword });
+                  toast(d.message);
+                  await loadUsers();
+                } catch (e) {
+                  toast(e.message, true);
+                }
+              }
+            }
+          ]
+        });
+      }
+
+      // 2. Configurar cuota y estado
+      const quotaBtn = event.target.closest('[data-edit-quota]');
+      if (quotaBtn) {
+        const { editQuota: username, limit, active, role } = quotaBtn.dataset;
+        return openModal({
+          title: `Permisos y Cuotas: ${username}`,
+          body: `Define el límite diario y estado de la cuenta:`,
+          extra: `
+            <div class="modal-input">
+              <label class="input-label">Límite Diario de Claves (0 = Sin límite)</label>
+              <input type="number" id="quota-limit-val" value="${limit}" min="0">
+            </div>
+            <div class="modal-input">
+              <label class="input-label">Estado de Cuenta</label>
+              <select id="quota-active-val">
+                <option value="true" ${active === 'true' ? 'selected' : ''}>Activo (Puede generar)</option>
+                <option value="false" ${active === 'false' ? 'selected' : ''}>Suspendido (Acceso bloqueado)</option>
+              </select>
+            </div>
+            <div class="modal-input">
+              <label class="input-label">Rol Asignado</label>
+              <select id="quota-role-val">
+                <option value="seller" ${role === 'seller' ? 'selected' : ''}>Vendedor (Solo crear)</option>
+                <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin (Crear y bloquear)</option>
+              </select>
+            </div>
+          `,
+          actions: [
+            cancelBtn,
+            {
+              label: 'Guardar Ajustes',
+              cls: 'btn-primary',
+              onClick: async () => {
+                const dailyLimit = parseInt($('quota-limit-val').value, 10) || 0;
+                const isActive = $('quota-active-val').value === 'true';
+                const newRole = $('quota-role-val').value;
+                closeModal();
+                try {
+                  const d = await api('/api/owner/users/set-quota', { username, daily_limit: dailyLimit, is_active: isActive, role: newRole });
+                  toast(d.message);
+                  await loadUsers();
+                } catch (e) {
+                  toast(e.message, true);
+                }
+              }
+            }
+          ]
+        });
+      }
+
+      // 3. Killswitch de emergencia
+      const killBtn = event.target.closest('[data-killswitch]');
+      if (killBtn) {
+        const targetUser = killBtn.dataset.killswitch;
+        return openModal({
+          title: `🚨 BLOQUEO DE EMERGENCIA (KILLSWITCH)`,
+          body: `¿Estás seguro de ejecutar el Killswitch sobre "${targetUser}"?<br><br><strong style="color:var(--danger)">ATENCIÓN:</strong> Esto bloqueará de inmediato TODAS las licencias y baneará TODOS los HWIDs generados por ${targetUser}.`,
+          actions: [
+            cancelBtn,
+            {
+              label: 'EJECUTAR BLOQUEO TOTAL',
+              cls: 'btn-danger',
+              onClick: async () => {
+                closeModal();
+                try {
+                  const d = await api('/api/owner/emergency-killswitch', { targetUser });
+                  toast(d.message);
+                  lastSig = '';
+                  await load();
+                } catch (e) {
+                  toast(e.message, true);
+                }
+              }
+            }
+          ]
+        });
+      }
+
+      // 4. Eliminar cuenta
       const button = event.target.closest('[data-remove-user]');
-      if (!button) return;
-      const username = button.dataset.removeUser;
-      if (!confirm(`¿Quitar la cuenta ${username}?`)) return;
-      try {
-        const response = await fetch(`/api/owner/users?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'No se pudo quitar la cuenta.');
-        toast(data.message);
-        await loadUsers();
-      } catch (error) {
-        toast(error.message, true);
+      if (button) {
+        const username = button.dataset.removeUser;
+        if (!confirm(`¿Quitar la cuenta ${username}?`)) return;
+        try {
+          const response = await fetch(`/api/owner/users?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'No se pudo quitar la cuenta.');
+          toast(data.message);
+          await loadUsers();
+        } catch (error) {
+          toast(error.message, true);
+        }
       }
     });
 
@@ -2422,7 +2610,12 @@
             <td><strong>${esc(k.product || 'No especificado')}</strong></td>
             <td><span class="muted">${esc(k.generated_by || 'No registrado')}</span></td>
             <td><strong>${esc(k.duration_type)}</strong></td>
-            <td><span class="muted">${esc(k.note) || 'Sin asignar'}</span></td>
+            <td>
+              <div class="note-cell-wrap" data-act="edit-note" data-key="${esc(k.key)}" data-note="${esc(k.note || '')}" title="Toca para editar cliente o nota">
+                <span class="note-display ${k.note ? '' : 'unassigned'}">${esc(k.note) || 'Sin asignar'}</span>
+                <span class="note-edit-icon">✏️</span>
+              </div>
+            </td>
             <td>
               <span class="status-badge ${esc(k.status)}">
                 <span class="status-dot-sm"></span>
@@ -2455,6 +2648,10 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                   </button>
                   <div class="menu" data-menu-for="${esc(k.key)}">
+                    <button data-act="edit-note" data-key="${esc(k.key)}" data-note="${esc(k.note || '')}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      Editar Cliente / Nota
+                    </button>
                     <button class="owner-only" data-act="extend" data-key="${esc(k.key)}">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
                       Añadir tiempo
@@ -2627,6 +2824,27 @@
       closeMenus();
 
       switch (act) {
+        case 'edit-note': {
+          const currentNote = el.dataset.note || '';
+          return openModal({
+            title: 'Editar Cliente / Referencia',
+            body: `Asigna o cambia el nombre del cliente para la clave ${key}:`,
+            extra: `<div class="modal-input"><input type="text" id="edit-note-input" value="${esc(currentNote)}" maxlength="64" placeholder="Ej. Juan Perez / WhatsApp" autocomplete="off"></div>`,
+            actions: [
+              cancelBtn,
+              {
+                label: 'Guardar Cliente',
+                cls: 'btn-primary',
+                onClick: async () => {
+                  const newNote = $('edit-note-input').value.trim();
+                  closeModal();
+                  await run('/api/admin/keys/set-note', { key, note: newNote }, `Cliente actualizado a: ${newNote || 'Sin asignar'}`);
+                }
+              }
+            ]
+          });
+        }
+
         case 'block':
           return confirmBox(
             'Bloquear licencia',

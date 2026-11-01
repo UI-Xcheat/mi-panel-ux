@@ -498,7 +498,36 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/owner/users' && req.method === 'GET') {
-    return sendJson(res, 200, { success: true, users: [...bootstrapUsers(), ...readManagedUsers().map(user => ({ username: user.username, role: user.role, managed: true }))] });
+    let managed = [];
+    if (SupabaseDb.isConfigured()) {
+      try {
+        const su = await SupabaseDb.getPanelUsers();
+        if (Array.isArray(su)) {
+          managed = su.map(u => ({
+            username: u.username,
+            role: u.role,
+            daily_limit: u.daily_limit || 0,
+            is_active: u.is_active !== false,
+            managed: !u.is_bootstrap
+          }));
+        }
+      } catch (_) {}
+    }
+    if (!managed.length) {
+      managed = readManagedUsers().map(user => ({
+        username: user.username,
+        role: user.role,
+        daily_limit: user.daily_limit || 0,
+        is_active: user.is_active !== false,
+        managed: true
+      }));
+    }
+    const bootstrap = bootstrapUsers();
+    const finalUsers = [
+      ...bootstrap,
+      ...managed.filter(m => !bootstrap.some(b => b.username.toLowerCase() === m.username.toLowerCase()))
+    ];
+    return sendJson(res, 200, { success: true, users: finalUsers });
   }
 
   if (pathname === '/api/owner/users' && req.method === 'POST') {
@@ -506,11 +535,13 @@ const server = http.createServer(async (req, res) => {
     const username = String(body.username || '').trim();
     const password = String(body.password || '');
     const role = body.role === 'seller' ? 'seller' : 'admin';
+    const dailyLimit = Math.max(0, parseInt(body.daily_limit || 0, 10));
+
     if (!/^[A-Za-z0-9_.-]{3,32}$/.test(username)) {
       return sendJson(res, 400, { success: false, message: 'El usuario debe tener entre 3 y 32 caracteres (letras, números, punto, guion o guion bajo).' });
     }
-    if (password.length < 10 || password.length > 128) {
-      return sendJson(res, 400, { success: false, message: 'La contraseña debe tener entre 10 y 128 caracteres.' });
+    if (password.length < 6 || password.length > 128) {
+      return sendJson(res, 400, { success: false, message: 'La contraseña debe tener al menos 6 caracteres.' });
     }
     const existing = [...bootstrapUsers(), ...readManagedUsers()];
     if (existing.some(user => user.username.toLowerCase() === username.toLowerCase())) {
@@ -518,16 +549,133 @@ const server = http.createServer(async (req, res) => {
     }
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = crypto.scryptSync(password, salt, 64).toString('hex');
+
+    if (SupabaseDb.isConfigured()) {
+      try {
+        await SupabaseDb.createPanelUser({
+          username,
+          role,
+          salt,
+          password_hash: passwordHash,
+          daily_limit: dailyLimit,
+          is_active: true
+        });
+      } catch (_) {}
+    }
+
     const users = readManagedUsers();
-    users.push({ username, role, salt, password_hash: passwordHash });
+    users.push({ username, role, salt, password_hash: passwordHash, daily_limit: dailyLimit, is_active: true });
     saveManagedUsers(users);
-    return sendJson(res, 201, { success: true, message: `Cuenta ${role === 'admin' ? 'Admin' : 'Vendedor'} creada.`, user: { username, role, managed: true } });
+    return sendJson(res, 201, { success: true, message: `Cuenta ${role === 'admin' ? 'Admin' : 'Vendedor'} creada.`, user: { username, role, managed: true, daily_limit: dailyLimit, is_active: true } });
+  }
+
+  // Cambiar contraseña de cualquier Admin o Vendedor
+  if (pathname === '/api/owner/users/change-password' && req.method === 'POST') {
+    const body = await parseJsonBody(req);
+    const username = String(body.username || '').trim();
+    const newPassword = String(body.password || body.newPassword || '');
+
+    if (!username || newPassword.length < 6) {
+      return sendJson(res, 400, { success: false, message: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+    }
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const passwordHash = crypto.scryptSync(newPassword, salt, 64).toString('hex');
+
+    if (SupabaseDb.isConfigured()) {
+      try {
+        await SupabaseDb.updatePanelUser(username, { salt, password_hash: passwordHash });
+      } catch (_) {}
+    }
+
+    const users = readManagedUsers();
+    const idx = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+    if (idx !== -1) {
+      users[idx].salt = salt;
+      users[idx].password_hash = passwordHash;
+      saveManagedUsers(users);
+    }
+
+    return sendJson(res, 200, { success: true, message: `Contraseña de ${username} actualizada con éxito.` });
+  }
+
+  // Configurar cuota de claves y estado activo/suspendido
+  if (pathname === '/api/owner/users/set-quota' && req.method === 'POST') {
+    const body = await parseJsonBody(req);
+    const username = String(body.username || '').trim();
+    const dailyLimit = Math.max(0, parseInt(body.daily_limit || 0, 10));
+    const isActive = body.is_active !== false;
+    const role = body.role === 'seller' ? 'seller' : 'admin';
+
+    if (SupabaseDb.isConfigured()) {
+      try {
+        await SupabaseDb.updatePanelUser(username, { daily_limit: dailyLimit, is_active: isActive, role });
+      } catch (_) {}
+    }
+
+    const users = readManagedUsers();
+    const idx = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+    if (idx !== -1) {
+      users[idx].daily_limit = dailyLimit;
+      users[idx].is_active = isActive;
+      users[idx].role = role;
+      saveManagedUsers(users);
+    }
+
+    return sendJson(res, 200, {
+      success: true,
+      message: `Configuración de ${username} guardada (Cuota: ${dailyLimit === 0 ? 'Ilimitada' : dailyLimit + '/día'}, Estado: ${isActive ? 'Activo' : 'Suspendido'}).`
+    });
+  }
+
+  // BOTÓN DE EMERGENCIA: KILLSWITCH POR ADMIN / VENDEDOR
+  if (pathname === '/api/owner/emergency-killswitch' && req.method === 'POST') {
+    const body = await parseJsonBody(req);
+    const targetUser = String(body.username || body.targetUser || '').trim();
+
+    if (!targetUser) {
+      return sendJson(res, 400, { success: false, message: 'Especifica el usuario para ejecutar el Killswitch.' });
+    }
+
+    let blockedCount = 0;
+    let hwidsBanned = 0;
+
+    if (SupabaseDb.isConfigured()) {
+      const resK = await SupabaseDb.emergencyKillswitchByCreator(targetUser);
+      blockedCount = resK.count || 0;
+      hwidsBanned = resK.hwidsBanned || 0;
+    }
+
+    for (const lic of licenses) {
+      if (lic.generated_by && lic.generated_by.toLowerCase() === targetUser.toLowerCase()) {
+        lic.is_blocked = true;
+        blockedCount++;
+        if (lic.hwid && !bannedHwids.has(lic.hwid)) {
+          bannedHwids.add(lic.hwid);
+          hwidsBanned++;
+        }
+      }
+    }
+    saveDatabase();
+    saveBannedHwids();
+
+    return sendJson(res, 200, {
+      success: true,
+      message: `🚨 KILLSWITCH EJECUTADO: ${blockedCount} claves bloqueadas y ${hwidsBanned} HWIDs baneados vinculados a "${targetUser}".`,
+      count: blockedCount,
+      hwidsBanned
+    });
   }
 
   if (pathname === '/api/owner/users' && req.method === 'DELETE') {
     const username = searchParams.get('username') || '';
+    if (SupabaseDb.isConfigured()) {
+      try {
+        await SupabaseDb.deletePanelUser(username);
+      } catch (_) {}
+    }
     const users = readManagedUsers();
-    const updated = users.filter(user => user.username !== username);
+    const updated = users.filter(user => user.username.toLowerCase() !== username.toLowerCase());
     if (updated.length === users.length) return sendJson(res, 404, { success: false, message: 'Solo se pueden quitar las cuentas creadas desde el panel.' });
     saveManagedUsers(updated);
     return sendJson(res, 200, { success: true, message: `Cuenta ${username} eliminada.` });
@@ -935,6 +1083,46 @@ const server = http.createServer(async (req, res) => {
     }
     const generatedBy = session.username;
 
+    // Control estricto de Cuotas y Estado (Activo / Suspendido) para Admins y Vendedores
+    if (session.role !== 'owner') {
+      let targetUser = null;
+      if (SupabaseDb.isConfigured()) {
+        try {
+          const su = await SupabaseDb.getPanelUsers();
+          if (Array.isArray(su)) {
+            targetUser = su.find(u => u.username.toLowerCase() === generatedBy.toLowerCase());
+          }
+        } catch (_) {}
+      }
+      if (!targetUser) {
+        targetUser = readManagedUsers().find(u => u.username.toLowerCase() === generatedBy.toLowerCase());
+      }
+      if (targetUser) {
+        if (targetUser.is_active === false) {
+          return sendJson(res, 403, { success: false, message: 'Tu cuenta está suspendida. No puedes generar licencias.' });
+        }
+        if (targetUser.daily_limit && targetUser.daily_limit > 0) {
+          const now = new Date();
+          const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          let todayCount = 0;
+          if (SupabaseDb.isConfigured()) {
+            const allK = await SupabaseDb.getKeys();
+            if (Array.isArray(allK)) {
+              todayCount = allK.filter(k => k.generated_by && k.generated_by.toLowerCase() === generatedBy.toLowerCase() && k.created_at >= startOfDay).length;
+            }
+          } else {
+            todayCount = licenses.filter(k => k.generated_by && k.generated_by.toLowerCase() === generatedBy.toLowerCase() && k.created_at >= startOfDay).length;
+          }
+          if (todayCount + qty > targetUser.daily_limit) {
+            return sendJson(res, 403, {
+              success: false,
+              message: `Límite diario alcanzado (${todayCount}/${targetUser.daily_limit} hoy). Contacta al Owner.`
+            });
+          }
+        }
+      }
+    }
+
     let durationHours = 168; // default 7d
     let isLifetime = false;
     let typeName = duration;
@@ -1299,6 +1487,31 @@ const server = http.createServer(async (req, res) => {
     lic.hwid = newHwid;
     saveDatabase();
     return sendJson(res, 200, { success: true, message: `HWID cambiado a ${newHwid}.` });
+  }
+
+  // =========================================================================
+  // API ADMIN: EDITAR CLIENTE / NOTA DE UNA CLAVE
+  // =========================================================================
+  if (pathname === '/api/admin/keys/set-note' && req.method === 'POST') {
+    const body = await parseJsonBody(req);
+    const key = (body.key || '').trim();
+    const note = String(body.note || '').trim();
+
+    if (!key) {
+      return sendJson(res, 400, { success: false, message: 'Falta especificar la clave.' });
+    }
+
+    if (SupabaseDb.isConfigured()) {
+      const ok = await SupabaseDb.updateKeyNote(key, note);
+      if (!ok) return sendJson(res, 502, { success: false, message: 'Supabase rechazó la actualización.' });
+      return sendJson(res, 200, { success: true, message: 'Nota / Cliente actualizado.', key, note });
+    }
+
+    const lic = licenses.find(l => l.key.toLowerCase() === key.toLowerCase());
+    if (!lic) return sendJson(res, 404, { success: false, message: 'Clave no encontrada.' });
+    lic.note = note;
+    saveDatabase();
+    return sendJson(res, 200, { success: true, message: 'Nota / Cliente actualizado.', key, note });
   }
 
   // =========================================================================
