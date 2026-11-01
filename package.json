@@ -1,0 +1,30 @@
+{
+  "name": "uixtream-license-server",
+  "version": "1.0.0",
+  "description": "By UiXtream Web Panel and License Server",
+  "main": "server.js",
+  "bin": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build:exe": "pkg package.json --targets node18-win-x64 --output UiXtreamLicenseServer.exe"
+  },
+  "keywords": [
+    "license",
+    "auth",
+    "uixtream",
+    "bloodstrike"
+  ],
+  "author": "UiXtream",
+  "license": "ISC",
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "supabase_public.json"
+    ]
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1",
+    "supabase": "^2.121.0"
+  }
+}

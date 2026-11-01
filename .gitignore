@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Entorno y Secretos locales (Protección Total)
+.env
+.env.local
+.env.*.local
+.supabase-edge-secrets.tmp
+ACCESO_PANEL.txt
+supabase_config.json
+
+# Binarios pesados de Windows
+UiXtreamLicenseServer.exe
+*.exe
+*.obj
+*.pdb
+
+# Bases de datos y caches locales
+data/*.json
+data/*.bak
+!data/.gitkeep
+.temp/
+.DS_Store
+Thumbs.db
