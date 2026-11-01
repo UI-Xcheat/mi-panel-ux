@@ -1716,6 +1716,17 @@
         width: 100% !important;
         padding-bottom: 30px;
       }
+      .mobile-table-hint {
+        display: block !important;
+        font-size: 11px;
+        color: var(--text-muted);
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
       table {
         min-width: 780px !important;
       }
@@ -1732,6 +1743,46 @@
         min-height: 40px !important;
         padding: 8px 14px !important;
         font-size: 13px !important;
+      }
+    }
+
+    .mobile-table-hint {
+      display: none;
+    }
+
+    .mobile-fab-container {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .mobile-fab-container {
+        display: block;
+        position: fixed;
+        bottom: 24px;
+        right: 20px;
+        z-index: 990;
+      }
+      .mobile-fab {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #bfc3c7 0%, #e1e3e5 100%);
+        color: #0f172a;
+        display: grid;
+        place-items: center;
+        border: none;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      .mobile-fab:active {
+        transform: scale(0.90);
+      }
+      .mobile-fab.spinning svg {
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
       }
     }
   </style>
@@ -1964,6 +2015,10 @@
             Exportar
           </button>
         </div>
+      </div>
+
+      <div class="mobile-table-hint">
+        <span>👆 Desliza horizontalmente la tabla para ver HWID, tiempo restante y acciones</span>
       </div>
 
       <div class="table-responsive">
@@ -2847,12 +2902,27 @@
           extra: `<div class="key-display">${esc(text)}</div>`,
           actions: [
             {
-              label: 'Copiar al Portapapeles',
+              label: 'Copiar',
               cls: 'btn-primary',
               close: false,
               onClick: () => {
                 navigator.clipboard.writeText(text);
-                toast('Todas las claves copiadas al portapapeles');
+                toast('Claves copiadas al portapapeles');
+              }
+            },
+            {
+              label: '📲 WhatsApp / Compartir',
+              cls: 'btn-outline-success',
+              close: false,
+              onClick: () => {
+                const prod = $('product-select')?.value || 'UiXtream';
+                const dur = $('duration-select')?.selectedOptions[0]?.text || '';
+                const msg = `🎮 *Tu Licencia UiXtream*\n🔑 *Clave:* \`${text}\`\n📦 *Producto:* ${prod}\n⏳ *Duración:* ${dur}\n\n✅ ¡Gracias por tu compra!`;
+                if (navigator.share) {
+                  navigator.share({ title: 'Licencia UiXtream', text: msg }).catch(() => {});
+                } else {
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+                }
               }
             },
             { label: 'Listo / Cerrar' }
@@ -2882,6 +2952,17 @@
       toastT = setTimeout(() => t.classList.remove('show'), 3200);
     }
 
+    // Mobile FAB Refresh
+    const mobRef = $('mobile-refresh-btn');
+    if (mobRef) {
+      mobRef.addEventListener('click', async () => {
+        mobRef.classList.add('spinning');
+        await load();
+        setTimeout(() => mobRef.classList.remove('spinning'), 600);
+        toast('Licencias actualizadas');
+      });
+    }
+
     // Comprobar sesión antes de mostrar datos administrativos.
     $('keys-tbody').innerHTML = skeletonRows();
     fetch('/api/auth/session').then(async response => {
@@ -2889,5 +2970,11 @@
       await enterPanel(await response.json());
     }).catch(() => showLogin());
   </script>
+
+  <div class="mobile-fab-container">
+    <button id="mobile-refresh-btn" class="mobile-fab" title="Recargar Licencias" aria-label="Recargar Licencias">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+    </button>
+  </div>
 </body>
 </html>
