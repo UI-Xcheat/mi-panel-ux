@@ -80,8 +80,7 @@
     .auth-card .btn { width: 100%; min-height: 50px; margin-top: 24px; font-size: 15px; }
     .auth-error { min-height: 20px; margin: 12px 0 0 !important; color: var(--danger) !important; font-size: 13px; }
     .role-badge { border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
-    body[data-role="admin"] .owner-only,
-    body[data-role="seller"] .owner-only { display: none !important; }
+    body:not([data-role="owner"]) .owner-only { display: none !important; }
     body[data-role="seller"] .admin-only { display: none !important; }
     .account-list { display: grid; gap: 9px; margin-top: 18px; }
     .account-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--card-border); border-radius: 12px; background: rgba(255,255,255,.025); }
@@ -157,6 +156,115 @@
       font-weight: 700;
       text-transform: uppercase;
       border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-owner-settings {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+      color: #000 !important;
+      font-weight: 800 !important;
+      border: 1px solid rgba(251, 191, 36, 0.7) !important;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4) !important;
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 6px 12px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-owner-settings:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6) !important;
+    }
+    .owner-modal-card {
+      max-width: 900px !important;
+      width: 95% !important;
+      max-height: 88vh !important;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0 !important;
+    }
+    .owner-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .owner-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 19px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+    .btn-close-modal:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .owner-tabs {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 12px 24px;
+      background: rgba(0, 0, 0, 0.15);
+      border-bottom: 1px solid var(--card-border);
+      scrollbar-width: none;
+    }
+    .owner-tabs::-webkit-scrollbar { display: none; }
+    .owner-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .owner-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .owner-tab.active {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25));
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.5);
+    }
+    .owner-modal-content {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .owner-tab-panel {
+      display: none;
+    }
+    .owner-tab-panel.active {
+      display: block;
+    }
+    .creator-stat-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      margin-bottom: 8px;
     }
     @media (max-width: 900px) {
       #account-form.form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1900,6 +2008,10 @@
         <span id="server-status-text">Conectando…</span>
       </div>
       <span class="role-badge" id="role-badge"></span>
+      <button class="btn btn-sm btn-owner-settings owner-only" id="btn-owner-settings" type="button" title="Centro de Control del Owner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        <span>Owner Settings</span>
+      </button>
       <button class="btn btn-secondary btn-sm" id="btn-logout" type="button">Salir</button>
       <button class="btn btn-secondary btn-sm" id="btn-refresh" title="Refrescar datos (R)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
@@ -2113,31 +2225,6 @@
       </div>
       <div id="bans-list"></div>
     </div>
-
-    <section class="card card-pad reveal owner-only" id="account-management" style="animation-delay:380ms">
-      <div class="card-header" style="margin-bottom:16px">
-        <div>
-          <div class="card-title">Cuentas del equipo</div>
-          <p class="page-description" style="margin-top:6px">Agrega vendedores y administradores. Cada cuenta guarda su contraseña protegida.</p>
-        </div>
-      </div>
-      <form id="account-form" class="form-grid">
-        <div class="input-group">
-          <label class="input-label" for="account-username">Usuario nuevo</label>
-          <input id="account-username" minlength="3" maxlength="32" placeholder="Ej. vendedor02" autocomplete="off" required>
-        </div>
-        <div class="input-group">
-          <label class="input-label" for="account-password">Contraseña inicial</label>
-          <input id="account-password" type="password" minlength="10" maxlength="128" placeholder="Mínimo 10 caracteres" autocomplete="new-password" required>
-        </div>
-        <div class="input-group">
-          <label class="input-label" for="account-role">Permisos</label>
-          <select id="account-role"><option value="seller">Vendedor · crear claves</option><option value="admin">Admin · crear y bloquear claves</option></select>
-        </div>
-        <button class="btn btn-primary" type="submit" id="account-submit">Crear cuenta</button>
-      </form>
-      <div class="account-list" id="account-list" aria-live="polite"></div>
-    </section>
   </main>
 
   <!-- Modal Component -->
@@ -2147,6 +2234,112 @@
       <div class="modal-body" id="modal-body"></div>
       <div id="modal-extra"></div>
       <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Dedicated Owner Settings Modal (Top Navigation Triggered) -->
+  <div class="modal-overlay" id="owner-modal">
+    <div class="modal-card owner-modal-card">
+      <div class="owner-modal-header">
+        <div class="owner-modal-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>👑 Owner Control Hub</span>
+        </div>
+        <button class="btn-close-modal" id="btn-close-owner" aria-label="Cerrar">&times;</button>
+      </div>
+
+      <div class="owner-tabs">
+        <button class="owner-tab active" data-otab="team">👥 Admins y Vendedores</button>
+        <button class="owner-tab" data-otab="emergency">🚨 Killswitch & Seguridad</button>
+        <button class="owner-tab" data-otab="stats">📊 Balance de Ventas</button>
+        <button class="owner-tab" data-otab="backup">💾 Backup & Base de Datos</button>
+      </div>
+
+      <div class="owner-modal-content">
+        <!-- Tab 1: Admins y Vendedores -->
+        <div class="owner-tab-panel active" id="opanel-team">
+          <div class="card card-pad" style="background:rgba(255,255,255,0.02); margin-bottom:16px;">
+            <div class="card-title" style="font-size:15px; margin-bottom:10px;">➕ Registrar Nuevo Vendedor o Admin</div>
+            <form id="owner-modal-account-form" class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px;">
+              <div class="input-group">
+                <label class="input-label">Usuario</label>
+                <input id="owner-new-user" placeholder="Ej. vendedor01" required autocomplete="off">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Contraseña</label>
+                <input id="owner-new-pwd" type="password" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Rol</label>
+                <select id="owner-new-role">
+                  <option value="seller">Vendedor (Solo crear claves)</option>
+                  <option value="admin">Admin (Crear y bloquear)</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label">Cuota diaria (0 = ilimitado)</label>
+                <input id="owner-new-quota" type="number" value="0" min="0">
+              </div>
+              <button class="btn btn-primary" type="submit" style="align-self:end; min-height:46px;">Crear Cuenta</button>
+            </form>
+          </div>
+
+          <div class="card-title" style="font-size:15px; margin: 16px 0 8px;">📋 Cuentas de tu Equipo (Control Total)</div>
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Cambia contraseñas, modifica cuotas diarias, suspende cuentas o activa el killswitch de emergencia por vendedor.</p>
+          <div class="account-list" id="owner-modal-user-list"></div>
+        </div>
+
+        <!-- Tab 2: Emergencias y Killswitch -->
+        <div class="owner-tab-panel" id="opanel-emergency">
+          <div style="display:grid; gap:16px;">
+            <div class="card card-pad" style="border-left: 4px solid var(--danger); background: rgba(239,68,68,0.06);">
+              <div class="card-title" style="color:var(--danger)">🚨 Botón de Pánico: Killswitch Global Maestro</div>
+              <p style="font-size:13px; color:var(--text-muted); margin: 8px 0 14px;">Bloquea de inmediato TODAS las licencias activas en el sistema. Úsalo en caso de emergencia extrema, ataque o filtración masiva.</p>
+              <button class="btn btn-danger" id="btn-global-killswitch" type="button" style="min-height:48px; font-weight:800;">⚠️ ACTIVAR BLOQUEO MAESTRO TOTAL</button>
+            </div>
+
+            <div class="card card-pad" style="border-left: 4px solid var(--accent); background: rgba(99,102,241,0.05);">
+              <div class="card-title">🧹 Purgar Llaves Expiradas</div>
+              <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Elimina permanentemente de la base de datos todas las claves cuya fecha ya expiró para mantener el panel rápido y limpio.</p>
+              <button class="btn btn-secondary" id="btn-purge-expired" type="button" style="min-height:42px;">Limpiar Llaves Vencidas</button>
+            </div>
+
+            <div class="card card-pad">
+              <div class="card-title">🛡️ Blacklist de PCs / Máquinas (HWIDs)</div>
+              <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Banear una PC de raíz por identificador HWID:</p>
+              <form id="owner-modal-ban-form" style="display:flex; gap:8px;">
+                <input id="owner-modal-ban-input" placeholder="UIX-XXXX-XXXX" style="flex:1" maxlength="64" autocomplete="off">
+                <button class="btn btn-outline-danger" type="submit">Banear PC</button>
+              </form>
+              <div class="card-title" style="font-size:14px; margin: 16px 0 8px;">Equipos actualmente bloqueados:</div>
+              <div id="owner-modal-bans-list" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Rendimiento de Ventas -->
+        <div class="owner-tab-panel" id="opanel-stats">
+          <div class="card-title" style="font-size:15px; margin-bottom:12px;">📊 Balance de Claves Generadas por Vendedor / Admin</div>
+          <div id="owner-creator-stats-list"></div>
+        </div>
+
+        <!-- Tab 4: Backup y Datos -->
+        <div class="owner-tab-panel" id="opanel-backup">
+          <div style="display:grid; gap:16px;">
+            <div class="card card-pad">
+              <div class="card-title">📥 Copia de Seguridad Completa (JSON)</div>
+              <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Descarga un archivo JSON de respaldo con todas tus licencias, estados, HWIDs bloqueados y cuentas de administradores y vendedores.</p>
+              <button class="btn btn-primary" id="btn-download-backup" type="button" style="min-height:44px;">Descargar Backup Ahora</button>
+            </div>
+
+            <div class="card card-pad">
+              <div class="card-title">🔄 Sincronización con Supabase Cloud</div>
+              <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Fuerza la recarga de claves y usuarios directamente desde la nube de Supabase:</p>
+              <button class="btn btn-secondary" id="btn-sync-supabase" type="button" style="min-height:42px;">Sincronizar Datos</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2312,7 +2505,7 @@
       if (currentUser?.role !== 'owner') return;
       try {
         const data = await api('/api/owner/users');
-        $('account-list').innerHTML = data.users.map(user => {
+        const html = data.users.map(user => {
           const isOwner = user.role === 'owner';
           const isActive = user.is_active !== false;
           const limitTxt = user.daily_limit ? `${user.daily_limit}/día` : 'Ilimitado';
@@ -2344,32 +2537,155 @@
             ` : ''}
           </div>`;
         }).join('');
+
+        if ($('account-list')) $('account-list').innerHTML = html;
+        if ($('owner-modal-user-list')) $('owner-modal-user-list').innerHTML = html;
+        renderCreatorStats(data.users);
       } catch (error) {
         toast(error.message || 'No se pudieron cargar las cuentas.', true);
       }
     }
 
-    $('account-form').addEventListener('submit', async event => {
+    function renderCreatorStats(users) {
+      const statsContainer = $('owner-creator-stats-list');
+      if (!statsContainer) return;
+      const countByCreator = {};
+      allKeys.forEach(k => {
+        const creator = (k.generated_by || 'Sin registrar').toLowerCase();
+        countByCreator[creator] = (countByCreator[creator] || 0) + 1;
+      });
+      statsContainer.innerHTML = users.map(u => {
+        const c = countByCreator[u.username.toLowerCase()] || 0;
+        return `
+          <div class="creator-stat-card">
+            <div>
+              <strong>${esc(u.username)}</strong>
+              <span class="role-badge" style="margin-left:8px;">${roleLabels[u.role] || esc(u.role)}</span>
+            </div>
+            <div>
+              <span style="font-size:16px; font-weight:800; color:var(--accent);">${c}</span>
+              <span style="font-size:12px; color:var(--text-muted); margin-left:4px;">claves creadas</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Owner Control Hub
+    const ownerModal = $('owner-modal');
+    $('btn-owner-settings')?.addEventListener('click', async () => {
+      ownerModal.classList.add('active');
+      await loadUsers();
+    });
+    $('btn-close-owner')?.addEventListener('click', () => {
+      ownerModal.classList.remove('active');
+    });
+    ownerModal?.addEventListener('click', e => {
+      if (e.target === ownerModal) ownerModal.classList.remove('active');
+    });
+
+    // Pestañas del Owner Hub
+    document.querySelectorAll('.owner-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.owner-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.owner-tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const target = $('opanel-' + tab.dataset.otab);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    // Botón de Pánico: Killswitch Maestro Global
+    $('btn-global-killswitch')?.addEventListener('click', () => {
+      confirmBox(
+        '🚨 ACTIVAR BLOQUEO MAESTRO TOTAL',
+        '¿CONFIRMAS QUE DESEAS SUSPENDER TODAS LAS LICENCIAS DEL SISTEMA? Ningún cliente podrá usar el cheat hasta que las reactives manualmente.',
+        'SUSPENDER TODO EL SISTEMA',
+        async () => {
+          try {
+            const d = await api('/api/owner/global-killswitch');
+            toast(d.message);
+            ownerModal.classList.remove('active');
+            lastSig = '';
+            await load();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        },
+        true
+      );
+    });
+
+    // Formulario de cuenta en modal
+    $('owner-modal-account-form')?.addEventListener('submit', async event => {
       event.preventDefault();
-      const button = $('account-submit');
-      button.disabled = true;
       try {
-        const data = await api('/api/owner/users', {
-          username: $('account-username').value.trim(),
-          password: $('account-password').value,
-          role: $('account-role').value
+        const d = await api('/api/owner/users', {
+          username: $('owner-new-user').value.trim(),
+          password: $('owner-new-pwd').value,
+          role: $('owner-new-role').value,
+          daily_limit: $('owner-new-quota').value
         });
-        $('account-form').reset();
-        toast(data.message);
+        $('owner-modal-account-form').reset();
+        toast(d.message);
         await loadUsers();
-      } catch (error) {
-        toast(error.message, true);
-      } finally {
-        button.disabled = false;
+      } catch (err) {
+        toast(err.message, true);
       }
     });
 
-    $('account-list').addEventListener('click', async event => {
+    // Banear HWID desde modal
+    $('owner-modal-ban-form')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const val = $('owner-modal-ban-input').value.trim();
+      if (!val) return;
+      try {
+        const d = await api('/api/admin/hwid/ban', { hwid: val });
+        $('owner-modal-ban-input').value = '';
+        toast(d.message || 'PC baneada');
+        lastSig = '';
+        await load();
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    // Purgar llaves expiradas
+    $('btn-purge-expired')?.addEventListener('click', () => {
+      confirmBox(
+        '🧹 PURGAR LLAVES EXPIRADAS',
+        '¿Deseas eliminar permanentemente de la base de datos todas las claves cuya fecha ya venció? Esta acción no se puede deshacer.',
+        'Eliminar Llaves Vencidas',
+        async () => {
+          try {
+            const d = await api('/api/owner/purge-expired');
+            toast(d.message);
+            lastSig = '';
+            await load();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        },
+        true
+      );
+    });
+
+    // Descargar Backup JSON
+    $('btn-download-backup')?.addEventListener('click', () => {
+      window.open('/api/owner/backup', '_blank');
+      toast('Descarga de Backup iniciada...');
+    });
+
+    // Resincronizar Supabase Cloud
+    $('btn-sync-supabase')?.addEventListener('click', async () => {
+      toast('Sincronizando con Supabase Cloud...');
+      lastSig = '';
+      await load();
+      await loadUsers();
+      toast('Base de datos sincronizada');
+    });
+
+    async function handleUserRowClick(event) {
       // 1. Cambiar contraseña
       const passBtn = event.target.closest('[data-change-pass]');
       if (passBtn) {
@@ -2493,7 +2809,10 @@
           toast(error.message, true);
         }
       }
-    });
+    }
+
+    $('account-list')?.addEventListener('click', handleUserRowClick);
+    $('owner-modal-user-list')?.addEventListener('click', handleUserRowClick);
 
     function setOnline(ok) {
       $('server-status').classList.toggle('offline', !ok);
@@ -2701,16 +3020,20 @@
 
     function renderBans() {
       const container = $('bans-list');
+      const modalContainer = $('owner-modal-bans-list');
+      const emptyHtml = `
+        <div class="empty">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>No hay computadoras bloqueadas en la lista negra.</span>
+        </div>`;
+
       if (!bans.length) {
-        container.innerHTML = `
-          <div class="empty">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            <span>No hay computadoras bloqueadas en la lista negra.</span>
-          </div>`;
+        if (container) container.innerHTML = emptyHtml;
+        if (modalContainer) modalContainer.innerHTML = emptyHtml;
         return;
       }
 
-      container.innerHTML = bans.map(h => `
+      const bansHtml = bans.map(h => `
         <div class="ban-row">
           <div style="display:flex; align-items:center; gap:10px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
@@ -2721,6 +3044,9 @@
           </button>
         </div>
       `).join('');
+
+      if (container) container.innerHTML = bansHtml;
+      if (modalContainer) modalContainer.innerHTML = bansHtml;
     }
 
     function renderAll() {

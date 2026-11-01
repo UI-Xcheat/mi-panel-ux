@@ -667,6 +667,85 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  // BOTÓN DE PÁNICO: KILLSWITCH GLOBAL MAESTRO
+  if (pathname === '/api/owner/global-killswitch' && req.method === 'POST') {
+    let count = 0;
+    if (SupabaseDb.isConfigured()) {
+      try {
+        const allK = await SupabaseDb.getKeys();
+        if (Array.isArray(allK)) {
+          for (const k of allK) {
+            if (!k.is_blocked) {
+              await SupabaseDb.updateKey(k.key, { is_blocked: true });
+              count++;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    for (const lic of licenses) {
+      if (!lic.is_blocked) {
+        lic.is_blocked = true;
+        count++;
+      }
+    }
+    saveDatabase();
+
+    return sendJson(res, 200, {
+      success: true,
+      message: `🚨 KILLSWITCH MAESTRO ACTIVADO: ${count} licencias activas fueron suspendidas de emergencia.`,
+      count
+    });
+  }
+
+  // PURGAR LLAVES EXPIRADAS
+  if (pathname === '/api/owner/purge-expired' && req.method === 'POST') {
+    const now = new Date();
+    const toDelete = [];
+    licenses.forEach(lic => {
+      const exp = lic.expires_at ? new Date(lic.expires_at) : null;
+      if (lic.is_expired || (exp && exp < now)) {
+        toDelete.push(lic.key);
+      }
+    });
+
+    if (SupabaseDb.isConfigured()) {
+      for (const k of toDelete) {
+        try {
+          await SupabaseDb.deleteKey(k);
+        } catch (_) {}
+      }
+    }
+
+    const setDel = new Set(toDelete);
+    licenses = licenses.filter(l => !setDel.has(l.key));
+    saveDatabase();
+
+    return sendJson(res, 200, {
+      success: true,
+      message: `🧹 Se purgaron exitosamente ${toDelete.length} llaves vencidas de la base de datos.`,
+      count: toDelete.length
+    });
+  }
+
+  // DESCARGAR BACKUP COMPLETO (JSON)
+  if (pathname === '/api/owner/backup' && req.method === 'GET') {
+    const backupData = {
+      exported_at: new Date().toISOString(),
+      server: 'UiXtream Ring 0 License Hub',
+      total_keys: licenses.length,
+      keys: licenses,
+      banned_hwids: bannedHwids,
+      team_accounts: readManagedUsers()
+    };
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': `attachment; filename="uix-backup-${Date.now()}.json"`,
+      ...CORS_HEADERS
+    });
+    return res.end(JSON.stringify(backupData, null, 2));
+  }
+
   if (pathname === '/api/owner/users' && req.method === 'DELETE') {
     const username = searchParams.get('username') || '';
     if (SupabaseDb.isConfigured()) {
