@@ -1576,7 +1576,12 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/' || pathname === '/index.html') {
     const htmlPath = path.join(RESOURCE_DIR, 'public', 'index.html');
     if (fs.existsSync(htmlPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       fs.createReadStream(htmlPath).pipe(res);
       return;
     }
