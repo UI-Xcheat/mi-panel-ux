@@ -231,7 +231,14 @@ const SupabaseDb = {
     async createPanelUser(userObj) {
         const cfg = loadConfig();
         if (!cfg) return null;
-        const res = await makeRequest(cfg, 'POST', '/rest/v1/panel_users', userObj, {
+        const payload = {
+            username: String(userObj.username || '').trim().toLowerCase(),
+            role: userObj.role || 'seller',
+            salt: userObj.salt,
+            password_hash: userObj.password_hash,
+            is_bootstrap: Boolean(userObj.is_bootstrap)
+        };
+        const res = await makeRequest(cfg, 'POST', '/rest/v1/panel_users', payload, {
             'Prefer': 'return=representation'
         });
         return res.statusCode >= 200 && res.statusCode < 300;
@@ -240,8 +247,13 @@ const SupabaseDb = {
     async updatePanelUser(username, updateObj) {
         const cfg = loadConfig();
         if (!cfg) return null;
-        const encoded = encodeURIComponent(username);
-        const res = await makeRequest(cfg, 'PATCH', `/rest/v1/panel_users?username=eq.${encoded}`, updateObj, {
+        const encoded = encodeURIComponent(String(username || '').trim().toLowerCase());
+        const payload = {};
+        if (updateObj.salt) payload.salt = updateObj.salt;
+        if (updateObj.password_hash) payload.password_hash = updateObj.password_hash;
+        if (updateObj.role) payload.role = updateObj.role;
+        if (Object.keys(payload).length === 0) return true;
+        const res = await makeRequest(cfg, 'PATCH', `/rest/v1/panel_users?username=eq.${encoded}`, payload, {
             'Prefer': 'return=representation'
         });
         return res.statusCode >= 200 && res.statusCode < 300;
@@ -250,7 +262,7 @@ const SupabaseDb = {
     async deletePanelUser(username) {
         const cfg = loadConfig();
         if (!cfg) return null;
-        const encoded = encodeURIComponent(username);
+        const encoded = encodeURIComponent(String(username || '').trim().toLowerCase());
         const res = await makeRequest(cfg, 'DELETE', `/rest/v1/panel_users?username=eq.${encoded}`);
         return res.statusCode >= 200 && res.statusCode < 300;
     },

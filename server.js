@@ -382,7 +382,15 @@ const server = http.createServer(async (req, res) => {
     const isAdmin = (adminUsernames.includes(uLower) || uLower === expectedAdminUser) &&
                     safeEqual(password, expectedAdminPass);
 
-    const managed = readManagedUsers().find(user => user.username.toLowerCase() === uLower);
+    let managed = readManagedUsers().find(user => user.username.toLowerCase() === uLower);
+    if (!managed && SupabaseDb.isConfigured()) {
+      try {
+        const su = await SupabaseDb.getPanelUsers();
+        if (Array.isArray(su)) {
+          managed = su.find(user => user.username.toLowerCase() === uLower);
+        }
+      } catch (_) {}
+    }
     const isManaged = Boolean(managed && verifyManagedPassword(password, managed));
 
     if (!isOwner && !isAdmin && !isManaged) {
@@ -499,22 +507,31 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/owner/users' && req.method === 'GET') {
     let managed = [];
+    const localManaged = readManagedUsers();
+    const localMap = new Map();
+    for (const u of localManaged) {
+      localMap.set(u.username.toLowerCase(), u);
+    }
+
     if (SupabaseDb.isConfigured()) {
       try {
         const su = await SupabaseDb.getPanelUsers();
         if (Array.isArray(su)) {
-          managed = su.map(u => ({
-            username: u.username,
-            role: u.role,
-            daily_limit: u.daily_limit || 0,
-            is_active: u.is_active !== false,
-            managed: !u.is_bootstrap
-          }));
+          managed = su.map(u => {
+            const loc = localMap.get(u.username.toLowerCase()) || {};
+            return {
+              username: u.username,
+              role: u.role,
+              daily_limit: loc.daily_limit || 0,
+              is_active: loc.is_active !== false,
+              managed: !u.is_bootstrap
+            };
+          });
         }
       } catch (_) {}
     }
     if (!managed.length) {
-      managed = readManagedUsers().map(user => ({
+      managed = localManaged.map(user => ({
         username: user.username,
         role: user.role,
         daily_limit: user.daily_limit || 0,
@@ -547,6 +564,14 @@ const server = http.createServer(async (req, res) => {
     if (existing.some(user => user.username.toLowerCase() === username.toLowerCase())) {
       return sendJson(res, 409, { success: false, message: 'Ya existe una cuenta con ese usuario.' });
     }
+    if (SupabaseDb.isConfigured()) {
+      try {
+        const su = await SupabaseDb.getPanelUsers();
+        if (Array.isArray(su) && su.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+          return sendJson(res, 409, { success: false, message: 'Ya existe una cuenta con ese usuario en Supabase.' });
+        }
+      } catch (_) {}
+    }
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = crypto.scryptSync(password, salt, 64).toString('hex');
 
@@ -557,16 +582,17 @@ const server = http.createServer(async (req, res) => {
           role,
           salt,
           password_hash: passwordHash,
-          daily_limit: dailyLimit,
-          is_active: true
+          is_bootstrap: false
         });
-      } catch (_) {}
+      } catch (err) {
+        console.error('[Supabase] Error al crear usuario en la nube:', err.message);
+      }
     }
 
     const users = readManagedUsers();
     users.push({ username, role, salt, password_hash: passwordHash, daily_limit: dailyLimit, is_active: true });
     saveManagedUsers(users);
-    return sendJson(res, 201, { success: true, message: `Cuenta ${role === 'admin' ? 'Admin' : 'Vendedor'} creada.`, user: { username, role, managed: true, daily_limit: dailyLimit, is_active: true } });
+    return sendJson(res, 201, { success: true, message: `Cuenta ${role === 'admin' ? 'Admin' : 'Vendedor'} (${username}) guardada en Supabase y panel.`, user: { username, role, managed: true, daily_limit: dailyLimit, is_active: true } });
   }
 
   // Cambiar contraseña de cualquier Admin o Vendedor
