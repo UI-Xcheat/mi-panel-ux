@@ -62,6 +62,7 @@ function resolveLicenseProduct(value: unknown) {
   if (norm === 'only_aim' || norm === 'only aim') return { id: 'only_aim', name: 'Only Aim', prefix: 'AX' };
   if (norm === 'externalux' || norm === 'external ux') return { id: 'externalux', name: 'ExternalUX', prefix: 'EX' };
   if (norm === 'privateux' || norm === 'private ux') return { id: 'privateux', name: 'PrivateUX', prefix: 'PX' };
+  if (norm === 'colorbot' || norm === 'uxcolor' || norm === 'cb') return { id: 'colorbot', name: 'ColorBot', prefix: 'CB' };
   return null;
 }
 function keyPrefixMatchesProduct(key: string, product: { id: string; name: string; prefix: string }) {
@@ -174,7 +175,7 @@ Deno.serve(async (req) => {
       const product = resolveLicenseProduct(body.product);
 
       if (!key) return json({ success: false, message: 'Se requiere una clave de licencia.' }, 400);
-      if (!product) return json({ success: false, message: 'Se requiere un producto válido (only_aim, externalux o privateux).' }, 400);
+      if (!product) return json({ success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux o colorbot).' }, 400);
       if (!keyPrefixMatchesProduct(key, product)) {
         return json({ success: false, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' }, 403);
       }

@@ -40,13 +40,17 @@ const ADMIN_MAX_HOURS = 15 * 7 * 24;
 const LICENSE_PRODUCTS = [
   { id: 'only_aim', name: 'Only Aim', prefix: 'AX' },
   { id: 'externalux', name: 'ExternalUX', prefix: 'EX' },
-  { id: 'privateux', name: 'PrivateUX', prefix: 'PX' }
+  { id: 'privateux', name: 'PrivateUX', prefix: 'PX' },
+  { id: 'colorbot', name: 'ColorBot', prefix: 'CB' }
 ];
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
 function resolveLicenseProduct(value) {
   const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'cb' || normalized === 'uxcolor' || normalized === 'color bot') {
+    return LICENSE_PRODUCTS.find(p => p.id === 'colorbot') || null;
+  }
   return LICENSE_PRODUCTS.find(product => product.id === normalized || product.name.toLowerCase() === normalized) || null;
 }
 
@@ -814,7 +818,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { success: false, message: 'Se requiere una clave de licencia.' });
     }
     if (!product) {
-      return sendJson(res, 400, { success: false, message: 'Se requiere un producto válido (only_aim, externalux o privateux).' });
+      return sendJson(res, 400, { success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux o colorbot).' });
     }
     if (!keyPrefixMatchesProduct(key, product)) {
       return sendJson(res, 403, { success: false, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' });
@@ -984,7 +988,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { valid: false, message: 'Falta parametro key' });
     }
     if (!product) {
-      return sendJson(res, 400, { valid: false, message: 'Falta parametro product (only_aim, externalux o privateux).' });
+      return sendJson(res, 400, { valid: false, message: 'Falta parametro product (only_aim, externalux, privateux o colorbot).' });
     }
     if (!keyPrefixMatchesProduct(key, product)) {
       return sendJson(res, 200, { valid: false, blocked: true, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' });
