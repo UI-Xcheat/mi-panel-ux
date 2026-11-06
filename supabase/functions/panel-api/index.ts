@@ -63,16 +63,17 @@ function resolveLicenseProduct(value: unknown) {
   if (norm === 'externalux' || norm === 'external ux') return { id: 'externalux', name: 'ExternalUX', prefix: 'EX' };
   if (norm === 'privateux' || norm === 'private ux') return { id: 'privateux', name: 'PrivateUX', prefix: 'PX' };
   if (norm === 'colorbot' || norm === 'uxcolor' || norm === 'cb') return { id: 'colorbot', name: 'ColorBot', prefix: 'CB' };
+  if (norm === 'skins' || norm === 'skin' || norm === 'skin remover' || norm === 'uixtream skins' || norm === 'usk') return { id: 'skins', name: 'UiXtream Skins', prefix: 'USK' };
   return null;
 }
 function keyPrefixMatchesProduct(key: string, product: { id: string; name: string; prefix: string }) {
   const upper = String(key || '').trim().toUpperCase();
-  const hasPrefix = upper.length >= 3 && upper[2] === '-';
+  const prefix = /^([A-Z]{2,4})-/.exec(upper)?.[1] || '';
   if (product.id === 'only_aim') {
-    if (!hasPrefix) return true;
-    return upper.startsWith(product.prefix + '-');
+    if (!prefix) return true;
+    return prefix === product.prefix;
   }
-  return hasPrefix && upper.startsWith(product.prefix + '-');
+  return prefix === product.prefix;
 }
 function licenseMatchesProduct(lic: Record<string, any>, key: string, product: { id: string; name: string; prefix: string }) {
   if (lic.product) {
@@ -93,9 +94,9 @@ function supabaseDurationHours(lic: Record<string, any>) {
   return 24;
 }
 
-function keyCode() {
+function keyCode(product: { prefix: string }) {
   const part = () => randomHex(3).toUpperCase();
-  return `UIX-${part()}-${part()}-${part()}`;
+  return `${product.prefix}-${part()}-${part()}-${part()}`;
 }
 function keyLabel(row: Record<string, any>) {
   const duration = String(row.duration || '');
@@ -175,7 +176,7 @@ Deno.serve(async (req) => {
       const product = resolveLicenseProduct(body.product);
 
       if (!key) return json({ success: false, message: 'Se requiere una clave de licencia.' }, 400);
-      if (!product) return json({ success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux o colorbot).' }, 400);
+      if (!product) return json({ success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux, colorbot o skins).' }, 400);
       if (!keyPrefixMatchesProduct(key, product)) {
         return json({ success: false, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' }, 403);
       }
@@ -337,10 +338,12 @@ Deno.serve(async (req) => {
     }
     if (action === 'keys-create') {
       const { hours, stored, days } = durationData(body, user.role);
-      const key = keyCode();
-      const { error } = await db.from('licenses').insert({ key, duration: stored, custom_days: days, status: 'unused', hwid: null, note: String(body.note || 'Cliente').slice(0, 80) });
+      const product = resolveLicenseProduct(body.product);
+      if (!product) return json({ success: false, message: 'Selecciona un producto válido.' }, 400);
+      const key = keyCode(product);
+      const { error } = await db.from('licenses').insert({ key, duration: stored, custom_days: days, status: 'unused', hwid: null, note: String(body.note || 'Cliente').slice(0, 80), product: product.name, generated_by: user.username });
       if (error) throw error;
-      return json({ success: true, message: 'Clave guardada en Supabase.', key: { key, duration_type: stored === 'lifetime' ? 'Permanente (Lifetime)' : days ? `${days} Días` : stored, note: body.note || 'Cliente', status: 'disponible', is_blocked: false, is_lifetime: stored === 'lifetime' } }, 201);
+      return json({ success: true, message: 'Clave guardada en Supabase.', key: { key, product: product.name, generated_by: user.username, duration_type: stored === 'lifetime' ? 'Permanente (Lifetime)' : days ? `${days} Días` : stored, note: body.note || 'Cliente', status: 'disponible', is_blocked: false, is_lifetime: stored === 'lifetime' } }, 201);
     }
     if (action === 'key-block') {
       if (user.role === 'seller') return json({ success: false, message: 'El rol Vendedor solo puede crear claves.' }, 403);

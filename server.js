@@ -41,7 +41,8 @@ const LICENSE_PRODUCTS = [
   { id: 'only_aim', name: 'Only Aim', prefix: 'AX' },
   { id: 'externalux', name: 'ExternalUX', prefix: 'EX' },
   { id: 'privateux', name: 'PrivateUX', prefix: 'PX' },
-  { id: 'colorbot', name: 'ColorBot', prefix: 'CB' }
+  { id: 'colorbot', name: 'ColorBot', prefix: 'CB' },
+  { id: 'skins', name: 'UiXtream Skins', prefix: 'USK' }
 ];
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
@@ -51,17 +52,21 @@ function resolveLicenseProduct(value) {
   if (normalized === 'cb' || normalized === 'uxcolor' || normalized === 'color bot') {
     return LICENSE_PRODUCTS.find(p => p.id === 'colorbot') || null;
   }
+  if (normalized === 'usk' || normalized === 'skin' || normalized === 'skin remover') {
+    return LICENSE_PRODUCTS.find(p => p.id === 'skins') || null;
+  }
   return LICENSE_PRODUCTS.find(product => product.id === normalized || product.name.toLowerCase() === normalized) || null;
 }
 
 function keyPrefixMatchesProduct(key, product) {
-  const match = /^([A-Z]{2})-/i.exec(String(key || ''));
+  const match = /^([A-Z]{2,4})-/i.exec(String(key || '').trim());
   return match ? match[1].toUpperCase() === product.prefix : product.id === 'only_aim';
 }
 
 function licenseMatchesProduct(license, key, product) {
   if (!keyPrefixMatchesProduct(key, product)) return false;
-  const keyProduct = LICENSE_PRODUCTS.find(item => item.prefix === String(key || '').slice(0, 2).toUpperCase());
+  const keyPrefix = String(key || '').trim().split('-', 1)[0].toUpperCase();
+  const keyProduct = LICENSE_PRODUCTS.find(item => item.prefix === keyPrefix);
   const storedProduct = license.product || keyProduct?.name || 'Only Aim';
   return storedProduct === product.name;
 }
@@ -818,7 +823,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { success: false, message: 'Se requiere una clave de licencia.' });
     }
     if (!product) {
-      return sendJson(res, 400, { success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux o colorbot).' });
+      return sendJson(res, 400, { success: false, message: 'Se requiere un producto válido (only_aim, externalux, privateux, colorbot o skins).' });
     }
     if (!keyPrefixMatchesProduct(key, product)) {
       return sendJson(res, 403, { success: false, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' });
@@ -988,7 +993,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { valid: false, message: 'Falta parametro key' });
     }
     if (!product) {
-      return sendJson(res, 400, { valid: false, message: 'Falta parametro product (only_aim, externalux, privateux o colorbot).' });
+      return sendJson(res, 400, { valid: false, message: 'Falta parametro product (only_aim, externalux, privateux, colorbot o skins).' });
     }
     if (!keyPrefixMatchesProduct(key, product)) {
       return sendJson(res, 200, { valid: false, blocked: true, code: 'PRODUCT_MISMATCH', message: 'Esta key pertenece a otro producto.' });
@@ -1164,7 +1169,7 @@ const server = http.createServer(async (req, res) => {
 
       return {
         ...l,
-        product: l.product || (LICENSE_PRODUCTS.find(product => product.prefix === String(l.key || '').slice(0, 2).toUpperCase())?.name || 'Only Aim'),
+        product: l.product || (LICENSE_PRODUCTS.find(product => product.prefix === String(l.key || '').trim().split('-', 1)[0].toUpperCase())?.name || 'Only Aim'),
         generated_by: l.generated_by || 'No registrado',
         status,
         remaining_ms: remainingMs
