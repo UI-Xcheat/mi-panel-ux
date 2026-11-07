@@ -2186,7 +2186,7 @@
       </div>
 
       <div class="mobile-table-hint">
-        <span>👆 Desliza horizontalmente la tabla para ver HWID, tiempo restante y acciones</span>
+        <span>Desliza horizontalmente la tabla para ver HWID, tiempo restante y acciones</span>
       </div>
 
       <div class="table-responsive">
@@ -2245,23 +2245,23 @@
       <div class="owner-modal-header">
         <div class="owner-modal-title">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span>👑 Owner Control Hub</span>
+          <span>Owner Control Hub</span>
         </div>
         <button class="btn-close-modal" id="btn-close-owner" aria-label="Cerrar">&times;</button>
       </div>
 
       <div class="owner-tabs">
-        <button class="owner-tab active" data-otab="team">👥 Admins y Vendedores</button>
-        <button class="owner-tab" data-otab="emergency">🚨 Killswitch & Seguridad</button>
-        <button class="owner-tab" data-otab="stats">📊 Balance de Ventas</button>
-        <button class="owner-tab" data-otab="backup">💾 Backup & Base de Datos</button>
+        <button class="owner-tab active" data-otab="team">Admins y Vendedores</button>
+        <button class="owner-tab" data-otab="emergency">Killswitch & Seguridad</button>
+        <button class="owner-tab" data-otab="stats">Balance de Ventas</button>
+        <button class="owner-tab" data-otab="backup">Backup & Base de Datos</button>
       </div>
 
       <div class="owner-modal-content">
         <!-- Tab 1: Admins y Vendedores -->
         <div class="owner-tab-panel active" id="opanel-team">
           <div class="card card-pad" style="background:rgba(255,255,255,0.02); margin-bottom:16px;">
-            <div class="card-title" style="font-size:15px; margin-bottom:10px;">➕ Registrar Nuevo Vendedor o Admin</div>
+            <div class="card-title" style="font-size:15px; margin-bottom:10px;">Registrar Nuevo Vendedor o Admin</div>
             <form id="owner-modal-account-form" class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px;">
               <div class="input-group">
                 <label class="input-label">Usuario</label>
@@ -2286,7 +2286,7 @@
             </form>
           </div>
 
-          <div class="card-title" style="font-size:15px; margin: 16px 0 8px;">📋 Cuentas de tu Equipo (Control Total)</div>
+          <div class="card-title" style="font-size:15px; margin: 16px 0 8px;">Cuentas de tu Equipo (Control Total)</div>
           <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Cambia contraseñas, modifica cuotas diarias, suspende cuentas o activa el killswitch de emergencia por vendedor.</p>
           <div class="account-list" id="owner-modal-user-list"></div>
         </div>
@@ -2295,19 +2295,19 @@
         <div class="owner-tab-panel" id="opanel-emergency">
           <div style="display:grid; gap:16px;">
             <div class="card card-pad" style="border-left: 4px solid var(--danger); background: rgba(239,68,68,0.06);">
-              <div class="card-title" style="color:var(--danger)">🚨 Botón de Pánico: Killswitch Global Maestro</div>
+              <div class="card-title" style="color:var(--danger)">Botón de Pánico: Killswitch Global Maestro</div>
               <p style="font-size:13px; color:var(--text-muted); margin: 8px 0 14px;">Bloquea de inmediato TODAS las licencias activas en el sistema. Úsalo en caso de emergencia extrema, ataque o filtración masiva.</p>
-              <button class="btn btn-danger" id="btn-global-killswitch" type="button" style="min-height:48px; font-weight:800;">⚠️ ACTIVAR BLOQUEO MAESTRO TOTAL</button>
+              <button class="btn btn-danger" id="btn-global-killswitch" type="button" style="min-height:48px; font-weight:800;">ACTIVAR BLOQUEO MAESTRO TOTAL</button>
             </div>
 
             <div class="card card-pad" style="border-left: 4px solid var(--accent); background: rgba(99,102,241,0.05);">
-              <div class="card-title">🧹 Purgar Llaves Expiradas</div>
+              <div class="card-title">Purgar Llaves Expiradas</div>
               <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Elimina permanentemente de la base de datos todas las claves cuya fecha ya expiró para mantener el panel rápido y limpio.</p>
               <button class="btn btn-secondary" id="btn-purge-expired" type="button" style="min-height:42px;">Limpiar Llaves Vencidas</button>
             </div>
 
             <div class="card card-pad">
-              <div class="card-title">🛡️ Blacklist de PCs / Máquinas (HWIDs)</div>
+              <div class="card-title">Blacklist de PCs / Máquinas (HWIDs)</div>
               <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Banear una PC de raíz por identificador HWID:</p>
               <form id="owner-modal-ban-form" style="display:flex; gap:8px;">
                 <input id="owner-modal-ban-input" placeholder="UIX-XXXX-XXXX" style="flex:1" maxlength="64" autocomplete="off">
@@ -2321,7 +2321,7 @@
 
         <!-- Tab 3: Rendimiento de Ventas -->
         <div class="owner-tab-panel" id="opanel-stats">
-          <div class="card-title" style="font-size:15px; margin-bottom:12px;">📊 Balance de Claves Generadas por Vendedor / Admin</div>
+          <div class="card-title" style="font-size:15px; margin-bottom:12px;">Balance de Claves Generadas por Vendedor / Admin</div>
           <div id="owner-creator-stats-list"></div>
         </div>
 
@@ -2329,13 +2329,13 @@
         <div class="owner-tab-panel" id="opanel-backup">
           <div style="display:grid; gap:16px;">
             <div class="card card-pad">
-              <div class="card-title">📥 Copia de Seguridad Completa (JSON)</div>
+              <div class="card-title">Copia de Seguridad Completa (JSON)</div>
               <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Descarga un archivo JSON de respaldo con todas tus licencias, estados, HWIDs bloqueados y cuentas de administradores y vendedores.</p>
               <button class="btn btn-primary" id="btn-download-backup" type="button" style="min-height:44px;">Descargar Backup Ahora</button>
             </div>
 
             <div class="card card-pad">
-              <div class="card-title">🔄 Sincronización con Supabase Cloud</div>
+              <div class="card-title">Sincronización con Supabase Cloud</div>
               <p style="font-size:13px; color:var(--text-muted); margin: 6px 0 12px;">Fuerza la recarga de claves y usuarios directamente desde la nube de Supabase:</p>
               <button class="btn btn-secondary" id="btn-sync-supabase" type="button" style="min-height:42px;">Sincronizar Datos</button>
             </div>
@@ -2520,21 +2520,21 @@
                 ${!isOwner ? `<span class="${isActive ? 'badge-status-active' : 'badge-status-suspended'}">${isActive ? 'Activo' : 'Suspendido'}</span>` : ''}
               </div>
               <div class="account-kind" style="margin-top:4px;">
-                ${isOwner ? '👑 Propietario Máximo (Control Total)' : `Cuota: <strong>${limitTxt}</strong> · ${user.managed ? 'Cuenta de equipo' : 'Cuenta principal'}`}
+                ${isOwner ? 'Propietario Máximo (Control Total)' : `Cuota: <strong>${limitTxt}</strong> · ${user.managed ? 'Cuenta de equipo' : 'Cuenta principal'}`}
               </div>
             </div>
             ${!isOwner ? `
             <div class="user-actions">
               <button class="btn btn-sm btn-secondary" type="button" data-change-pass="${esc(user.username)}" title="Cambiar contraseña de este usuario">
-                🔑 Clave
+                Clave
               </button>
               <button class="btn btn-sm btn-secondary" type="button" data-edit-quota="${esc(user.username)}" data-limit="${user.daily_limit || 0}" data-active="${isActive}" data-role="${user.role}" title="Ajustar límites de claves">
-                ⚡ Cuota
+                Cuota
               </button>
               <button class="btn btn-sm btn-outline-danger" type="button" data-killswitch="${esc(user.username)}" title="Bloqueo de Emergencia: revocar todo lo creado por este usuario">
-                🚨 Killswitch
+                Killswitch
               </button>
-              ${user.managed ? `<button class="btn btn-sm btn-outline-danger" type="button" data-remove-user="${esc(user.username)}" title="Quitar cuenta">🗑️</button>` : ''}
+              ${user.managed ? `<button class="btn btn-sm btn-outline-danger" type="button" data-remove-user="${esc(user.username)}" title="Quitar cuenta"></button>` : ''}
             </div>
             ` : ''}
           </div>`;
@@ -2600,7 +2600,7 @@
     // Botón de Pánico: Killswitch Maestro Global
     $('btn-global-killswitch')?.addEventListener('click', () => {
       confirmBox(
-        '🚨 ACTIVAR BLOQUEO MAESTRO TOTAL',
+        'ACTIVAR BLOQUEO MAESTRO TOTAL',
         '¿CONFIRMAS QUE DESEAS SUSPENDER TODAS LAS LICENCIAS DEL SISTEMA? Ningún cliente podrá usar el cheat hasta que las reactives manualmente.',
         'SUSPENDER TODO EL SISTEMA',
         async () => {
@@ -2655,7 +2655,7 @@
     // Purgar llaves expiradas
     $('btn-purge-expired')?.addEventListener('click', () => {
       confirmBox(
-        '🧹 PURGAR LLAVES EXPIRADAS',
+        'PURGAR LLAVES EXPIRADAS',
         '¿Deseas eliminar permanentemente de la base de datos todas las claves cuya fecha ya venció? Esta acción no se puede deshacer.',
         'Eliminar Llaves Vencidas',
         async () => {
@@ -2773,7 +2773,7 @@
       if (killBtn) {
         const targetUser = killBtn.dataset.killswitch;
         return openModal({
-          title: `🚨 BLOQUEO DE EMERGENCIA (KILLSWITCH)`,
+          title: `BLOQUEO DE EMERGENCIA (KILLSWITCH)`,
           body: `¿Estás seguro de ejecutar el Killswitch sobre "${targetUser}"?<br><br><strong style="color:var(--danger)">ATENCIÓN:</strong> Esto bloqueará de inmediato TODAS las licencias y baneará TODOS los HWIDs generados por ${targetUser}.`,
           actions: [
             cancelBtn,
@@ -2934,7 +2934,7 @@
             <td>
               <div class="note-cell-wrap" data-act="edit-note" data-key="${esc(k.key)}" data-note="${esc(k.note || '')}" title="Toca para editar cliente o nota">
                 <span class="note-display ${k.note ? '' : 'unassigned'}">${esc(k.note) || 'Sin asignar'}</span>
-                <span class="note-edit-icon">✏️</span>
+                <span class="note-edit-icon"></span>
               </div>
             </td>
             <td>
@@ -3460,13 +3460,13 @@
               }
             },
             {
-              label: '📲 WhatsApp / Compartir',
+              label: 'WhatsApp / Compartir',
               cls: 'btn-outline-success',
               close: false,
               onClick: () => {
                 const prod = $('product-select')?.value || 'UiXtream';
                 const dur = $('duration-select')?.selectedOptions[0]?.text || '';
-                const msg = `🎮 *Tu Licencia UiXtream*\n🔑 *Clave:* \`${text}\`\n📦 *Producto:* ${prod}\n⏳ *Duración:* ${dur}\n\n✅ ¡Gracias por tu compra!`;
+                const msg = `*Tu Licencia UiXtream*\n*Clave:* \`${text}\`\n*Producto:* ${prod}\n*Duración:* ${dur}\n\n¡Gracias por tu compra!`;
                 if (navigator.share) {
                   navigator.share({ title: 'Licencia UiXtream', text: msg }).catch(() => {});
                 } else {

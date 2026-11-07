@@ -696,7 +696,7 @@ const server = http.createServer(async (req, res) => {
 
     return sendJson(res, 200, {
       success: true,
-      message: `🚨 KILLSWITCH EJECUTADO: ${blockedCount} claves bloqueadas y ${hwidsBanned} HWIDs baneados vinculados a "${targetUser}".`,
+      message: `KILLSWITCH EJECUTADO: ${blockedCount} claves bloqueadas y ${hwidsBanned} HWIDs baneados vinculados a "${targetUser}".`,
       count: blockedCount,
       hwidsBanned
     });
@@ -728,7 +728,7 @@ const server = http.createServer(async (req, res) => {
 
     return sendJson(res, 200, {
       success: true,
-      message: `🚨 KILLSWITCH MAESTRO ACTIVADO: ${count} licencias activas fueron suspendidas de emergencia.`,
+      message: `KILLSWITCH MAESTRO ACTIVADO: ${count} licencias activas fueron suspendidas de emergencia.`,
       count
     });
   }
@@ -758,7 +758,7 @@ const server = http.createServer(async (req, res) => {
 
     return sendJson(res, 200, {
       success: true,
-      message: `🧹 Se purgaron exitosamente ${toDelete.length} llaves vencidas de la base de datos.`,
+      message: `Se purgaron exitosamente ${toDelete.length} llaves vencidas de la base de datos.`,
       count: toDelete.length
     });
   }
