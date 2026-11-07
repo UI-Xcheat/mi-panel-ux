@@ -155,7 +155,7 @@ const SupabaseDb = {
     async getKey(keyStr) {
         const cfg = loadConfig();
         if (!cfg) return null;
-        const res = await makeRequest(cfg, 'GET', `/rest/v1/licenses?key=eq.${encodeURIComponent(keyStr)}&select=*&limit=1`);
+        const res = await makeRequest(cfg, 'GET', `/rest/v1/licenses?key=ilike.${encodeURIComponent(keyStr)}&select=*&limit=1`);
         if (res.statusCode >= 200 && res.statusCode < 300 && Array.isArray(res.data)) {
             return res.data[0] || null;
         }
@@ -189,7 +189,7 @@ const SupabaseDb = {
         const cfg = loadConfig();
         if (!cfg) return null;
         const encodedKey = encodeURIComponent(keyStr);
-        const res = await makeRequest(cfg, 'PATCH', `/rest/v1/licenses?key=eq.${encodedKey}`, updateObj, {
+        const res = await makeRequest(cfg, 'PATCH', `/rest/v1/licenses?key=ilike.${encodedKey}`, updateObj, {
             'Prefer': 'return=representation'
         });
         return res.statusCode >= 200 && res.statusCode < 300;
@@ -199,7 +199,7 @@ const SupabaseDb = {
         const cfg = loadConfig();
         if (!cfg) return null;
         const encodedKey = encodeURIComponent(keyStr);
-        const res = await makeRequest(cfg, 'DELETE', `/rest/v1/licenses?key=eq.${encodedKey}`);
+        const res = await makeRequest(cfg, 'DELETE', `/rest/v1/licenses?key=ilike.${encodedKey}`);
         return res.statusCode >= 200 && res.statusCode < 300;
     },
 
