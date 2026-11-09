@@ -56,11 +56,11 @@ function loadConfig() {
             }
         }
 
-        // 4. Fallback maestro cifrado del proyecto
+        // 4. Fallback maestro del proyecto (requiere .env o supabase_config.json local)
         return {
-            supabase_url: 'https://yqomkgcbzvdhuxzpyqry.supabase.co',
-            supabase_anon_key: 'sb_publishable_0FgXGvc9bnu__HvsTP9wXQ_S_rP77GQ',
-            supabase_service_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlxb21rZ2NienZkaHV4enB5cXJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MTc2OTc0MywiZXhwIjoyMTA3MzQ1NzQzfQ.PNdGyxheQKPSIveI95yfN9I9m0MOBDR3MW3DxkINJnA'
+            supabase_url: process.env.SUPABASE_URL || 'https://yqomkgcbzvdhuxzpyqry.supabase.co',
+            supabase_anon_key: process.env.SUPABASE_ANON_KEY || 'sb_publishable_uG6A5hE_V_sSVOBzDDTdRA_bDXWVGeR',
+            supabase_service_key: process.env.SUPABASE_SERVICE_KEY || ''
         };
     } catch (e) {
         console.error('[Supabase] Error cargando configuracion:', e.message);
